@@ -21,12 +21,6 @@
 
 		<github.global.server>github</github.global.server>
 		-->
-		<!--
-		[[ GitHub Maven Pluginsのための設定 ]]
-		Github上のMavenリポジトリにアップロードするまえの一時的な格納先を指定する.
-
-		<org.doogwood.base.tempRepo>file://${project.build.directory}/mvn-repo</org.doogwood.base.tempRepo>
-		-->
 	</properties>
 	
 	<!--
