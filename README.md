@@ -1,0 +1,2 @@
+# doogwood-base
+Mavenプロジェクトのテンプレート
