@@ -3,7 +3,6 @@ package org.doogwood.jp1ajs2.jobextract.service;
 import java.io.File;
 import java.nio.charset.Charset;
 import java.util.Properties;
-import java.util.regex.Pattern;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.DefaultParser;
@@ -31,6 +30,7 @@ public class ConfigService {
 	private static final String OPTION_COND_ATTR_X = "A";
 	private static final String OPTION_COND_PARAM_X = "P";
 	private static final String OPTION_IGNORE_CASE = "i";
+	private static final String OPTION_REGEX_MATCHING = "r";
 	
 	public Options defineOptions() {
 		final Options ops = new Options();
@@ -85,15 +85,13 @@ public class ConfigService {
 				.hasArg(true)
 				.argName("unit-name")
 				.desc("ユニットが指定された名前である場合に抽出対象とする. "
-						+ "\"-Aname=...\"のエイリアス. "
-						+ "ワイルドカード（\"?\"と\"*\"）を使用できる.")
+						+ "\"-Aname=...\"のエイリアス. ")
 				.build());
 		opg.addOption(Option.builder(OPTION_COND_FQN)
 				.required(false)
 				.hasArg(true)
 				.argName("full-qualified-name")
-				.desc("ユニットが指定された完全名である場合に抽出対象とする. "
-						+ "ワイルドカード（\"?\"と\"*\"）を使用できる.")
+				.desc("ユニットが指定された完全名である場合に抽出対象とする.")
 				.build());
 		opg.addOption(Option.builder(OPTION_COND_ATTR_X)
 				.required(false)
@@ -102,7 +100,6 @@ public class ConfigService {
 				.numberOfArgs(2)
 				.valueSeparator()
 				.desc("ユニット属性パラメータが指定された値をとる場合に抽出対象とする. "
-						+ "属性値にはワイルドカード（\"?\"と\"*\"）を使用できる. "
 						+ "属性名として指定できるのは: name, ownerName, permissionMode, resourceGroupName")
 				.build());
 		opg.addOption(Option.builder(OPTION_COND_PARAM_X)
@@ -111,14 +108,18 @@ public class ConfigService {
 				.argName("param=value")
 				.numberOfArgs(2)
 				.valueSeparator()
-				.desc("ユニット定義パラメータが指定された値をとる場合に抽出対象とする. "
-						+ "パラメータ値にはワイルドカード（\"?\"と\"*\"）を使用できる.")
+				.desc("ユニット定義パラメータが指定された値をとる場合に抽出対象とする.")
 				.build());
 		ops.addOptionGroup(opg);
 		ops.addOption(Option.builder("i")
 				.required(false)
 				.hasArg(false)
 				.desc("抽出条件のマッチングで大文字小文字のちがいを無視する.")
+				.build());
+		ops.addOption(Option.builder("r")
+				.required(false)
+				.hasArg(false)
+				.desc("抽出条件として指定された文字列を正規表現パターンとみなしてマッチングを行う.")
 				.build());
 		// TOOD
 		return ops;
@@ -132,20 +133,6 @@ public class ConfigService {
 			sb.append(f);
 		}
 		return sb.toString();
-	}
-	public Pattern convertWildcardToRegex(final String wildcard, final boolean ignoreCase) {
-		final Pattern wpDot = Pattern.compile("\\.");
-		final Pattern wp1 = Pattern.compile("\\?");
-		final Pattern wpN = Pattern.compile("\\*");
-		final StringBuilder sb = new StringBuilder();
-		sb.append('^');
-		sb.append(wpN.matcher(wp1.matcher(wpDot.matcher(wildcard).replaceAll("\\.")).replaceAll(".")).replaceAll(".*"));
-		sb.append('$');
-		if (ignoreCase) {
-			return Pattern.compile(sb.toString(), Pattern.CASE_INSENSITIVE);
-		} else {
-			return Pattern.compile(sb.toString());
-		}
 	}
 	
 	public Parameters parseArguments(final Options options, final String[] arguments) throws ParseException {
@@ -202,47 +189,41 @@ public class ConfigService {
 		}
 		
 		params.setIgnoreCase(cmd.hasOption(OPTION_IGNORE_CASE));
+		params.setRegexMatching(cmd.hasOption(OPTION_REGEX_MATCHING));
 		
 		final Condition cond = new Condition();
 		
 		if (cmd.hasOption(OPTION_COND_FQN)) {
-			cond.setFullQualifiedName(convertWildcardToRegex(
-					cmd.getOptionValue(OPTION_COND_FQN),
-					params.isIgnoreCase()));
+			cond.setFullQualifiedName(cmd.getOptionValue(OPTION_COND_FQN));
 		}
 		
 		if (cmd.hasOption(OPTION_COND_NAME)) {
-			cond.setAttrUnitName(convertWildcardToRegex(
-					cmd.getOptionValue(OPTION_COND_NAME),
-					params.isIgnoreCase()));
+			cond.setAttrUnitName(cmd.getOptionValue(OPTION_COND_NAME));
 		}
 		
 		final Properties attrProps = cmd.getOptionProperties(OPTION_COND_ATTR_X);
 		for (final String s : attrProps.stringPropertyNames()) {
 			if (s.equals("name")) {
-				cond.setAttrUnitName(convertWildcardToRegex(
-						attrProps.getProperty(s), params.isIgnoreCase()));
+				cond.setAttrUnitName(attrProps.getProperty(s));
 			} else if (s.equals("ownerName")) {
-				cond.setAttrOwnerName(convertWildcardToRegex(
-						attrProps.getProperty(s), params.isIgnoreCase()));
+				cond.setAttrOwnerName(attrProps.getProperty(s));
 			} else if (s.equals("permissionMode")) {
-				cond.setAttrPermissionMode(convertWildcardToRegex(
-						attrProps.getProperty(s), params.isIgnoreCase()));
+				cond.setAttrPermissionMode(attrProps.getProperty(s));
 			} else if (s.equals("resourceGroupName")) {
-				cond.setAttrResourceGroupName(convertWildcardToRegex(
-						attrProps.getProperty(s), params.isIgnoreCase()));
+				cond.setAttrResourceGroupName(attrProps.getProperty(s));
 			}
 		}
 		
 		final Properties paramProps = cmd.getOptionProperties(OPTION_COND_PARAM_X);
 		for (final String s : paramProps.stringPropertyNames()) {
-			cond.addParam(s, convertWildcardToRegex(cmd.getOptionValue(s), params.isIgnoreCase()));
+			cond.addParam(s, paramProps.getProperty(s));
 		}
 		
 		params.setCondition(cond);
 		
 		return params;
 	}
+	
 	public void printHelp(final Options options) {
 		final HelpFormatter formatter = new HelpFormatter();
 		formatter.printHelp("jobextract(java -jar jp1ajs2-jobextract-...jar)",

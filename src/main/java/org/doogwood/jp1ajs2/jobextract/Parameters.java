@@ -10,6 +10,7 @@ public class Parameters {
 	private Charset destCharset;
 	private Format format;
 	private boolean ignoreCase;
+	private boolean regexMatching;
 	private Condition condition;
 	
 	public boolean isIgnoreCase() {
@@ -53,5 +54,11 @@ public class Parameters {
 	}
 	public void setFormat(Format format) {
 		this.format = format;
+	}
+	public boolean isRegexMatching() {
+		return regexMatching;
+	}
+	public void setRegexMatching(boolean regexMatching) {
+		this.regexMatching = regexMatching;
 	}
 }

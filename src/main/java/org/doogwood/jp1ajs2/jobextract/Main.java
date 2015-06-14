@@ -21,11 +21,6 @@ public class Main {
 	private UnitService unitService;
 	
 	public static void main(final String[] args) throws IOException {
-//		final BufferedReader br = new BufferedReader(new InputStreamReader(System.in, Charset.defaultCharset()));
-//		String line = null;
-//		while ((line = br.readLine()) != null) {
-//			System.out.println(line.toUpperCase());
-//		}
 		
 		final Class<Main> classMeta = Main.class;
 		final String packageName = classMeta.getPackage().getName();
@@ -59,7 +54,12 @@ public class Main {
 			if (unitDefs.isEmpty()) {
 				throw new ApplicationException(Messages.ERROR_WHILE_PARSING_UNITDEFS);
 			}
-			final List<Unit> extractedUnitDefs = unitService.extractUnits(params, unitDefs);
+			final Condition cond = params.getCondition();
+			final boolean ignoreCase = params.isIgnoreCase();
+			final boolean regexMatching = params.isRegexMatching();
+			final List<Unit> extractedUnitDefs = 
+					regexMatching ? unitService.extractUnitsByRegexMatching(cond, ignoreCase, unitDefs)
+							: unitService.extractUnitsByStringMatching(cond, ignoreCase, unitDefs);
 			if (extractedUnitDefs.isEmpty()) {
 				throw new ApplicationException(Messages.ERROR_WHILE_EXTRACTING_UNITDEFS);
 			}
