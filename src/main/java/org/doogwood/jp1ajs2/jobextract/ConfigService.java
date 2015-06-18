@@ -166,7 +166,7 @@ public class ConfigService {
 		if (cmd.hasOption(OPTION_DEST_CHARSET)) {
 			final String c = cmd.getOptionValue(OPTION_DEST_CHARSET);
 			if (Charset.isSupported(c)) {
-				params.setSourceCharset(Charset.forName(c));
+				params.setDestCharset(Charset.forName(c));
 			} else {
 				throw new IllegalArgumentException(Messages.ERROR_WHILE_CHECKING_X_CHARSET);
 			}
@@ -180,6 +180,8 @@ public class ConfigService {
 			} catch (final IllegalArgumentException e) {
 				throw new IllegalArgumentException(Messages.ERROR_WHILE_CHECKING_FORMAT);
 			}
+		} else {
+			params.setFormat(Format.defaultFormat());
 		}
 		
 		params.setIgnoreCase(cmd.hasOption(OPTION_IGNORE_CASE));
