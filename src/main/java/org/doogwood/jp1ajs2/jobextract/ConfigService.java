@@ -8,7 +8,6 @@ import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Option;
-import org.apache.commons.cli.OptionGroup;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.springframework.stereotype.Service;
@@ -29,11 +28,9 @@ public class ConfigService {
 	private static final String OPTION_REGEX_MATCHING = "r";
 	
 	public Options defineOptions() {
-		final Options ops = new Options();
-		final OptionGroup opg = new OptionGroup();
-		opg.setRequired(true);
+		final Options options = new Options();
 		
-		ops.addOption(Option.builder(OPTION_SOURCE_PATH)
+		options.addOption(Option.builder(OPTION_SOURCE_PATH)
 				.required(false)
 				.hasArg(true)
 				.argName("source-filepath")
@@ -41,14 +38,14 @@ public class ConfigService {
 						+ "絶対パスのほか\".\"（カレント・ディレクトリ）を起点にした相対パスも使用できる. "
 						+ "ファイルパスを指定しなかった場合は標準入力からユニット定義情報を読み取る.")
 				.build());
-		ops.addOption(Option.builder(OPTION_DEST_PATH)
+		options.addOption(Option.builder(OPTION_DEST_PATH)
 				.required(false)
 				.hasArg(true)
 				.argName("destination-filepath")
 				.desc("ユニット定義情報の抽出結果を出力するファイル. "
 						+ "指定しない場合は標準出力ファイルに出力される.")
 				.build());
-		ops.addOption(Option.builder(OPTION_SOURCE_CHARSET)
+		options.addOption(Option.builder(OPTION_SOURCE_CHARSET)
 				.required(false)
 				.hasArg(true)
 				.argName("input-charset")
@@ -57,7 +54,7 @@ public class ConfigService {
 						+ Charset.defaultCharset().displayName()
 						+ ")が使用される.")
 				.build());
-		ops.addOption(Option.builder(OPTION_DEST_CHARSET)
+		options.addOption(Option.builder(OPTION_DEST_CHARSET)
 				.required(false)
 				.hasArg(true)
 				.argName("output-charset")
@@ -66,7 +63,7 @@ public class ConfigService {
 						+ Charset.defaultCharset().displayName()
 						+ ")が使用される.")
 				.build());
-		ops.addOption(Option.builder(OPTION_FORMAT)
+		options.addOption(Option.builder(OPTION_FORMAT)
 				.required(false)
 				.hasArg(true)
 				.argName("format-name")
@@ -76,20 +73,20 @@ public class ConfigService {
 						+ "指定できるフォーマットは次の通り: " + LINE_SEP
 						+ joinFormatNames())
 				.build());
-		opg.addOption(Option.builder(OPTION_COND_NAME)
+		options.addOption(Option.builder(OPTION_COND_NAME)
 				.required(false)
 				.hasArg(true)
 				.argName("unit-name")
 				.desc("ユニットが指定された名前である場合に抽出対象とする. "
 						+ "\"-Aname=...\"のエイリアス. ")
 				.build());
-		opg.addOption(Option.builder(OPTION_COND_FQN)
+		options.addOption(Option.builder(OPTION_COND_FQN)
 				.required(false)
 				.hasArg(true)
 				.argName("full-qualified-name")
 				.desc("ユニットが指定された完全名である場合に抽出対象とする.")
 				.build());
-		opg.addOption(Option.builder(OPTION_COND_ATTR_X)
+		options.addOption(Option.builder(OPTION_COND_ATTR_X)
 				.required(false)
 				.hasArg(true)
 				.argName("attr=value")
@@ -98,7 +95,7 @@ public class ConfigService {
 				.desc("ユニット属性パラメータが指定された値をとる場合に抽出対象とする. "
 						+ "属性名として指定できるのは: name, ownerName, permissionMode, resourceGroupName")
 				.build());
-		opg.addOption(Option.builder(OPTION_COND_PARAM_X)
+		options.addOption(Option.builder(OPTION_COND_PARAM_X)
 				.required(false)
 				.hasArg(true)
 				.argName("param=value")
@@ -106,20 +103,21 @@ public class ConfigService {
 				.valueSeparator()
 				.desc("ユニット定義パラメータが指定された値をとる場合に抽出対象とする.")
 				.build());
-		ops.addOptionGroup(opg);
-		ops.addOption(Option.builder("i")
+
+		options.addOption(Option.builder("i")
 				.required(false)
 				.hasArg(false)
 				.desc("抽出条件のマッチングで大文字小文字のちがいを無視する.")
 				.build());
-		ops.addOption(Option.builder("r")
+		options.addOption(Option.builder("r")
 				.required(false)
 				.hasArg(false)
 				.desc("抽出条件として指定された文字列を正規表現パターンとみなしてマッチングを行う.")
 				.build());
-		// TOOD
-		return ops;
+
+		return options;
 	}
+	
 	private String joinFormatNames() {
 		final StringBuilder sb = new StringBuilder();
 		for (final Format f : Format.values()) {
@@ -215,6 +213,16 @@ public class ConfigService {
 			cond.addParam(s, paramProps.getProperty(s));
 		}
 		
+		if (cond.getFullQualifiedName() == null &&
+				cond.getAttrOwnerName() == null &&
+				cond.getAttrPermissionMode() == null &&
+				cond.getAttrResourceGroupName() == null &&
+				cond.getAttrUnitName() == null &&
+				cond.getParams().isEmpty()) {
+			cond.setFullQualifiedName("^/[^/]+$");
+			params.setRegexMatching(true);
+		}
+		
 		params.setCondition(cond);
 		
 		return params;
@@ -223,7 +231,8 @@ public class ConfigService {
 	public void printHelp(final Options options) {
 		final HelpFormatter formatter = new HelpFormatter();
 		formatter.printHelp("jobextract(java -jar jp1ajs2-jobextract-...jar)",
-				"ディレクトリとファイル名パターンで指定された",
+				"ユニット定義ファイルから指定された条件にマッチするユニットを抜き出す. "
+				+ "条件が指定されていない場合はユニット定義ファイル上ルートレベルにあたるユニットを抜き出す. ",
 				options,
 				"",
 				true);

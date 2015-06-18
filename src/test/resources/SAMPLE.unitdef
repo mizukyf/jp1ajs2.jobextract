@@ -50,3 +50,8 @@ unit=FOON0000,AAAAA,BBBBB,CCCCC;
 		sc="foo/bar/baz.exe";
 	}
 }
+unit=FOON0002,AAAAA,BBBBB,CCCCC;
+{
+	ty=n;
+	sz=10×10;
+}

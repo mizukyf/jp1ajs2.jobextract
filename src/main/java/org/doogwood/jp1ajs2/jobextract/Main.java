@@ -48,6 +48,7 @@ public class Main {
 		
 		try {
 			final Parameters params = configService.parseArguments(options, args);
+			
 			final List<Unit> unitDefs = unitService.parseUnits(params);
 			if (unitDefs.isEmpty()) {
 				throw new ApplicationException(Messages.ERROR_WHILE_PARSING_UNITDEFS);
