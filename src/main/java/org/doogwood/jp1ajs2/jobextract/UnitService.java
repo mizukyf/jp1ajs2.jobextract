@@ -1,9 +1,12 @@
-package org.doogwood.jp1ajs2.jobextract.service;
+package org.doogwood.jp1ajs2.jobextract;
 
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -12,8 +15,6 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.regex.Pattern;
 
-import org.doogwood.jp1ajs2.jobextract.Condition;
-import org.doogwood.jp1ajs2.jobextract.Parameters;
 import org.doogwood.jp1ajs2.unitdef.Param;
 import org.doogwood.jp1ajs2.unitdef.Unit;
 import org.doogwood.jp1ajs2.unitdef.Units;
@@ -157,11 +158,64 @@ public class UnitService {
 		} else {
 			out = new FileOutputStream(dest, true);
 		}
-		for (final Unit u : unitDefs) {
-			Units.writeToStream(u, out, params.getDestCharset());
+		if (params.getFormat() == Format.READABLE) {
+			printWithReadableFormat(out, params.getDestCharset(), unitDefs);
+		} else if (params.getFormat() == Format.COMPACT) {
+			printWithCompactFormat(out, params.getDestCharset(), unitDefs);
+		} else if (params.getFormat() == Format.FQN_LIST) {
+			printWithFqnListFormat(out, params.getDestCharset(), unitDefs);
+		} else if (params.getFormat() == Format.LIST) {
+			printWithListFormat(out, params.getDestCharset(), unitDefs);
+		} else {
+			throw new IllegalStateException();
 		}
 		if (dest != null) {
 			out.close();
 		}
+	}
+	
+	private void printWithReadableFormat(
+			final OutputStream out, 
+			final Charset charset, 
+			final List<Unit> unitDefs) throws IOException {
+		for (final Unit u : unitDefs) {
+			Units.writeToStream(u, out, charset);
+		}
+	}
+	
+	private void printWithCompactFormat(
+			final OutputStream out, 
+			final Charset charset, 
+			final List<Unit> unitDefs) throws IOException {
+		final CompactFormatter f = new CompactFormatter();
+		final byte[] lineSep = System.getProperty("line.separator").getBytes();
+		for (final Unit u : unitDefs) {
+			f.format(u, out, charset);
+			out.write(lineSep);
+		}
+	}
+	
+	private void printWithFqnListFormat(
+			final OutputStream out, 
+			final Charset charset, 
+			final List<Unit> unitDefs) throws IOException {
+		final BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(out, charset));
+		for (final Unit u : unitDefs) {
+			bw.write(u.getFullQualifiedName());
+			bw.newLine();
+		}
+		bw.flush();
+	}
+	
+	private void printWithListFormat(
+			final OutputStream out, 
+			final Charset charset, 
+			final List<Unit> unitDefs) throws IOException {
+		final BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(out, charset));
+		for (final Unit u : unitDefs) {
+			bw.write(u.getName());
+			bw.newLine();
+		}
+		bw.flush();
 	}
 }

@@ -3,7 +3,7 @@ package org.doogwood.jp1ajs2.jobextract;
 import java.io.File;
 import java.nio.charset.Charset;
 
-public class Parameters {
+final class Parameters {
 	private File source;
 	private Charset sourceCharset;
 	private File dest;

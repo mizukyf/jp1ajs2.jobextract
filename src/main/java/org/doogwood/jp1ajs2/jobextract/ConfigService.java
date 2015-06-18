@@ -1,4 +1,4 @@
-package org.doogwood.jp1ajs2.jobextract.service;
+package org.doogwood.jp1ajs2.jobextract;
 
 import java.io.File;
 import java.nio.charset.Charset;
@@ -11,15 +11,11 @@ import org.apache.commons.cli.Option;
 import org.apache.commons.cli.OptionGroup;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
-import org.doogwood.jp1ajs2.jobextract.Condition;
-import org.doogwood.jp1ajs2.jobextract.Format;
-import org.doogwood.jp1ajs2.jobextract.Messages;
-import org.doogwood.jp1ajs2.jobextract.Parameters;
 import org.springframework.stereotype.Service;
 
 @Service
 public class ConfigService {
-	
+	private static final String LINE_SEP = System.getProperty("line.separator");
 	private static final String OPTION_SOURCE_PATH = "s";
 	private static final String OPTION_SOURCE_CHARSET = "c";
 	private static final String OPTION_DEST_PATH = "d";
@@ -75,9 +71,9 @@ public class ConfigService {
 				.hasArg(true)
 				.argName("format-name")
 				.desc("抽出結果ファイルのフォーマット. "
-						+ "デフォルトは\"" + Format.READABLE
+						+ "デフォルトは\"" + Format.defaultFormat()
 						+ "\". "
-						+ "指定できるフォーマットは次の通り: "
+						+ "指定できるフォーマットは次の通り: " + LINE_SEP
 						+ joinFormatNames())
 				.build());
 		opg.addOption(Option.builder(OPTION_COND_NAME)
@@ -128,9 +124,9 @@ public class ConfigService {
 		final StringBuilder sb = new StringBuilder();
 		for (final Format f : Format.values()) {
 			if (sb.length() > 0) {
-				sb.append(", ");
+				sb.append(LINE_SEP);
 			}
-			sb.append(f);
+			sb.append('"').append(f).append('"').append(" - ").append(f.getDesc());
 		}
 		return sb.toString();
 	}

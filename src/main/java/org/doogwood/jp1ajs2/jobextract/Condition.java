@@ -4,7 +4,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-public final class Condition {
+final class Condition {
 	private String fullQualifiedName;
 	private String attrUnitName;
 	private String attrOwnerName;

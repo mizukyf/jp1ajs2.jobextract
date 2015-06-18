@@ -6,8 +6,6 @@ import java.util.List;
 
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
-import org.doogwood.jp1ajs2.jobextract.service.ConfigService;
-import org.doogwood.jp1ajs2.jobextract.service.UnitService;
 import org.doogwood.jp1ajs2.unitdef.Unit;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;

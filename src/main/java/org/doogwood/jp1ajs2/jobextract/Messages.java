@@ -1,6 +1,6 @@
 package org.doogwood.jp1ajs2.jobextract;
 
-public final class Messages {
+final class Messages {
 	public static final String ERROR_WHILE_PARSING_OPTIONS = "コマンドライン・オプションの読み取り中にエラーが発生しました. "
 			+ "オプションの指定方法が誤っている可能性があります.";
 	public static final String ERROR_WHILE_SEARCHING_INPUTS = "読み取り対象のファイルが見つかりませんでした. "
